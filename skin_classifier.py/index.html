@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Skin Analyzer</title>
+    <style>
+        body { font-family: Arial; max-width: 800px; margin: 50px auto; padding: 20px; }
+        button { padding: 10px 20px; margin: 10px; cursor: pointer; }
+        #result { margin-top: 20px; padding: 20px; background: #f0f0f0; border-radius: 10px; }
+    </style>
+</head>
+<body>
+    <h1>🧴 AI Skin Analyzer</h1>
+    
+    <input type="file" id="fileInput" accept="image/*">
+    <button onclick="analyzeImage()">Analyze Skin</button>
+    
+    <div id="result">
+        <p>Upload an image and click "Analyze Skin"</p>
+    </div>
+    
+    <script>
+        async function analyzeImage() {
+            const file = document.getElementById('fileInput').files[0];
+            if (!file) { alert('Please select an image'); return; }
+            
+            const formData = new FormData();
+            formData.append('image', file);
+            
+            document.getElementById('result').innerHTML = '<p>Analyzing... Please wait</p>';
+            
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('result').innerHTML = `
+                        <h2>Results:</h2>
+                        <p><strong>Skin Type:</strong> ${data.skin_type.type}</p>
+                        <p><strong>Severity:</strong> ${data.overall_severity.toFixed(1)}%</p>
+                        <p><strong>Acne Types:</strong> ${Object.entries(data.acne_types).filter(([k,v])=>v>0).map(([k])=>k).join(', ') || 'None detected'}</p>
+                        <p><strong>Summary:</strong> ${data.summary.join('; ')}</p>
+                    `;
+                } else {
+                    document.getElementById('result').innerHTML = `<p style="color:red">Error: ${data.error}</p>`;
+                }
+            } catch (err) {
+                document.getElementById('result').innerHTML = `<p style="color:red">Error: ${err.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
